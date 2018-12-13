@@ -8,19 +8,14 @@
 class Main {
     // main entry point.
     public static void main(final String[] args) {
+        // Original world creation
         int rows = 10;
         int columns = 10;
         int goalEmeralds = 16; //7 emeralds + 3 diamonds
         final World world = new World(rows, columns, goalEmeralds);
 
         // prints out a welcome message and the rules for this specific game
-        System.out.println("Welcome to Emerald Mine, PRA 2003 edition.");
-        System.out.println("Here are the rules:");
-        System.out.println("You are the player (p). \n" + "Your aim is to collect " + goalEmeralds +
-                " emeralds (e) without leaving the map or getting killed by the alien (a). \n" +
-                "You can also collect diamonds (d), each diamond is worth three emeralds. \n" +
-                "The alien can move up, down left or right by one and he can steal emeralds. \n" +
-                "You can move up, down, left or right by one by pressing u, d, l or r respectively. \n");
+        world.printRules();
 
         // Play the game
         while (world.status() == World.Playing) {
@@ -31,24 +26,29 @@ class Main {
             else
                 world.applyMove(move);
         }
-
         // Show the result
         System.out.println(world);
         switch (world.status()) {
-            case World.Win:
-                System.out.println("You win!");
-                break;
-            case World.LossAlien:
-                System.out.println("Alien killed you. Bad luck. You lose.");
-                break;
-            case World.LossEmeralds:
-                System.out.println("Alien stole too many emeralds. Bad luck. You lose.");
-                break;
-            case World.LossLimits:
-                System.out.println("You crossed the world limits. Bad luck. You lose.");
-                break;
-            default:
-                System.out.println("** Unexpected game outcome " + world.status() + ".");
+           case World.Win:
+               System.out.println("You win!");
+               break;
+           case World.LossAlienMeet:
+               System.out.println("You hit the alien. Bad luck. You lose.");
+               break;
+           case World.LossAlienAttack:
+               System.out.println("Alien killed you. Bad luck. You lose.");
+               break;
+           case World.LossEmeralds:
+               System.out.println("Alien stole too many emeralds. Bad luck. You lose.");
+               break;
+           case World.LossLimits:
+               System.out.println("You crossed the world limits. Bad luck. You lose.");
+               break;
+           case World.LossGravity:
+               System.out.println("A massive object fell on you. Bad luck. You lose.");
+               break;
+           default:
+               System.out.println("** Unexpected game outcome " + world.status() + ".");
         }
     }
 }

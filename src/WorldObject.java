@@ -20,6 +20,7 @@ public abstract class WorldObject {
     public boolean isPlayer(){ return false; }
     public char getMove(){ return '?'; }
     public int getEmeraldValue(){ return 0; }
+    final static Random rand = new Random();
 }
 
 // EdibleObject (includes all edible elements of the game)
@@ -35,6 +36,7 @@ abstract class Moveable extends WorldObject {
 //---------------------------------------------CONCRETE CLASSES---------------------------------------------------------
 // implement the abstract methods in WorldObject, override default implementations when necessary, override toString
 
+// space object, is edible and vulnerable
 class Space extends WorldObject {
     public boolean isEdible() { return true; }
     public boolean hasMass() { return false; }
@@ -42,6 +44,7 @@ class Space extends WorldObject {
     public String toString(){ return "."; }
 }
 
+// rock object, has mass
 class Rock extends WorldObject {
     public boolean isEdible() { return false; }
     public boolean hasMass() { return true; }
@@ -49,12 +52,14 @@ class Rock extends WorldObject {
     public String toString(){ return "r"; }
 }
 
+// dirt object, is edible
 class Dirt extends EdibleObject {
     public boolean hasMass() { return false; }
     public boolean isVulnerable() { return false; }
     public String toString(){ return "#"; }
 }
 
+// emerald object, has mass, is edible and has a value of 1
 class Emerald extends EdibleObject{
     public boolean hasMass() { return true; }
     public boolean isVulnerable() { return false; }
@@ -62,6 +67,7 @@ class Emerald extends EdibleObject{
     public String toString(){ return "e"; }
 }
 
+// diamond object, has mass, is vulnerable, is edible and has a value of 3
 class Diamond extends EdibleObject{
     public boolean hasMass() { return true; }
     public boolean isVulnerable() { return true; }
@@ -69,6 +75,7 @@ class Diamond extends EdibleObject{
     public String toString(){ return "d"; }
 }
 
+// alien object, can move, has mass and is vulnerable
 class Alien extends Moveable {
     public boolean isEdible() { return false; }
     public boolean hasMass() { return true; }
@@ -77,7 +84,7 @@ class Alien extends Moveable {
 
     // returns a random char move (u/d/l/r)
     public char getMove() {
-        Random rand = new Random();
+
         char move;
         switch (rand.nextInt(4))
         {
@@ -91,6 +98,7 @@ class Alien extends Moveable {
     }
 }
 
+// player object, can move, is vulnerable and is the player
 class Player extends Moveable{
     public boolean isEdible() {  return false; }
     public boolean hasMass() { return false; }
