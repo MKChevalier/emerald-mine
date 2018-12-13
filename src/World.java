@@ -10,10 +10,6 @@
  * World.java: Creation of World Class and necessary methods
  */
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -22,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.Scanner;
+
 
 //-----------------------------------------------------------------------------
 
@@ -34,12 +30,12 @@ class World
 	/**
 	 * Simple record of a [row,col] coordinate.
 	 */
-	class RC
+	class Coordinates
 	{
 		int row = -1;
 		int col = -1;
 		
-		public RC(final int row, final int col)
+		public Coordinates(final int row, final int col)
 		{
 			this.row = row;
 			this.col = col;
@@ -51,27 +47,26 @@ class World
 			col = c;
 		}
 		
-		public boolean matches(final RC other)
+		public boolean matches(final Coordinates other)
 		{
 			return row == other.row && col == other.col;
 		}
 	}
 
 	
-    private int rows, cols, emeraldsRemaining, initialEmeralds, emeraldsStolen, goalEmeralds;
+    private int rows, cols;
+	private int initialEmeralds, emeraldsRemaining, emeraldsStolen;
+
     private WorldObject[][] world;
     private final Random rng = new Random();
 
-    private RC playerAt = null;           // player location
-    private RC alienAt  = null;           // alien location
-    private RC supported = null;          // player supports this cell
-    
-    public static final int Playing = 0;  // game in progress
-    public static final int Win     = 1;  // player win
-    public static final int Loss    = 2;  // player loss
-    private int status;
+    private Coordinates playerAt = null;           // player location
+    private Coordinates alienAt  = null;           // alien location
+    private Coordinates supported = null;          // player supports this cell
+
+    private GameStatus status;
  	
-	public static final int Off = -1;     // off-board cell
+	// public static final int Off = -1;     // off-board cell
 
     //-------------------------------------------------------------------------
     
@@ -82,7 +77,9 @@ class World
     {
         this.rows = rows;
         this.cols = cols;
+        this.initialEmeralds = emeralds;
         this.emeraldsRemaining = emeralds;
+
         init();
     }
 
@@ -118,7 +115,7 @@ class World
         return emeraldsRemaining;
     }
 
-    public int getStatus() {
+    public GameStatus getStatus() {
         return status;
     }
 
@@ -153,7 +150,6 @@ class World
 		for (int d = 0; d < numDiamonds; d++) 
 			objects.add(new Diamond());
 		// keep track of how many emeralds were initially placed and are initially required
-        goalEmeralds = emeraldsRemaining;
         initialEmeralds = emeraldsRemaining+1;
 
 
@@ -176,12 +172,12 @@ class World
 			world[row][col] = objects.get(n);
 		
 			if (world[row][col].isPlayer())
-				playerAt = new RC(row, col);
+				playerAt = new Coordinates(row, col);
 			else if (world[row][col].isMonster())
-				alienAt = new RC(row, col);
+				alienAt = new Coordinates(row, col);
 		}
 		
-		status = Playing;  // game is now active
+		status = GameStatus.PLAYING;  // game is now active
     }
 
     //-------------------------------------------------------------------------
@@ -246,7 +242,6 @@ class World
 
         // keep these two values (they will never change)
         initialEmeralds = emeraldsInWorld;
-        goalEmeralds = emeraldsRemaining;
         in.close();
     }
 
@@ -291,7 +286,7 @@ class World
     /**
      * @return Result of suggested move: Playing / Win / Loss.
      */
-    public int applyMove(final char ch) 
+    public GameStatus applyMove(final char ch)
     {
     	playerMove(ch);
     	if (alienAt != null)
@@ -304,7 +299,7 @@ class World
     	// if alien stole too many emeralds to win, player loses.
     	if (initialEmeralds - emeraldsStolen < emeraldsRemaining )
         {
-            status = Loss;
+            status = GameStatus.LOST;
         }
 
     	// Apply gravity
@@ -316,7 +311,7 @@ class World
         		supported == null ? -1 : supported.col
        		)
         )
-        	status = Loss;  // player killed by something dropping on them
+        	status = GameStatus.LOST;  // player killed by something dropping on them
         
     	return status;
     }
@@ -330,11 +325,11 @@ class World
     {
     	supported = null;
     	
-    	final RC playerNext = stepTo(playerAt, ch);
+    	final Coordinates playerNext = stepTo(playerAt, ch);
         if (!inBounds(playerNext.row, playerNext.col) || world[playerNext.row][playerNext.col].isMonster())
         {
         	// Player dies
-        	status = Loss;
+        	status = GameStatus.LOST;
         	world[playerAt.row][playerAt.col] = new Space();  // remove the player from this world
             return;
         }
@@ -350,7 +345,7 @@ class World
 
             // Check for a win
             if (emeraldsRemaining == 0)
-            	status = Win;
+            	status = GameStatus.WON;
          
             // Move the player
             world[playerAt.row][playerAt.col] = new Space();
@@ -362,7 +357,7 @@ class World
             if (inBounds(rowAbove, playerAt.col) && world[rowAbove][playerAt.col].hasMass()) 
             {
             	// Player supports the object above
-                supported = new RC(rowAbove, playerAt.col);
+                supported = new Coordinates(rowAbove, playerAt.col);
             }
     	}
         else
@@ -382,7 +377,7 @@ class World
     	if (alienAt == null)
     		return;  // alien is off the board and no longer active
     	
-    	final RC alienNext = stepTo(alienAt, ch);
+    	final Coordinates alienNext = stepTo(alienAt, ch);
     	  
         if (!inBounds(alienNext.row, alienNext.col)) 
         {
@@ -393,10 +388,10 @@ class World
         {
             // Alien can move there
         	if (world[alienNext.row][alienNext.col].isPlayer()) 
-        		status = Loss;  // alien will step onto player
+        		status = GameStatus.LOST;  // alien will step onto player
 
             // counts the emeralds the alien steals
-            emeraldsStolen += world[alienAt.row][alienAt.col].getEmeraldValue();
+            emeraldsStolen += world[alienAt.row][alienAt.col].getEmeraldValue(); // TODO: Should probably be alienNext
         	world[alienAt.row][alienAt.col] = new Space();
         	alienAt.set(alienNext.row, alienNext.col);
         	world[alienAt.row][alienAt.col] = new Alien();
@@ -452,7 +447,7 @@ class World
     /**
       * @return Coordinate of step in the specified direction.
      */
-    public RC stepTo(final RC from, final char dirn)
+    public Coordinates stepTo(final Coordinates from, final char dirn)
     {
     	int dRow = 0;
         int dCol = 0;
@@ -464,7 +459,7 @@ class World
         	case 'r': dCol++; break;
         	default: System.out.println("** World.stepTo(): Unexpected dirn '" + dirn + "'.");
         }
-        return new RC(from.row+dRow, from.col+dCol);
+        return new Coordinates(from.row+dRow, from.col+dCol);
     }
     
     //-------------------------------------------------------------------------
