@@ -1,0 +1,176 @@
+/**
+ * PRA2003: Assignment 2 sample solution.
+ * Author: Cameron Browne (based on code by Marc Lanctot).
+ *
+ * Note: if you use this code, add your name and ID to this header!
+ */
+
+import java.util.Random;
+import java.util.Scanner;
+
+/**
+ * An object that can exist in the world.
+ * Every cell in the world array will contain an object.
+ */
+abstract class WorldObject
+{
+    // returns true if this object is edible, false otherwise
+    public abstract boolean isEdible();
+
+    // returns true if the object can fall (due to gravity), false otherwise
+    public abstract boolean hasMass();
+
+    //returns true if the object gets destroyed if a rock falls on it, false otherwise
+    public abstract boolean isVulnerable();
+
+    //-------------------------------------------------------------------------
+
+    // can this object move?
+    public boolean canMove()
+    {
+        return false; // immobile by default, must be overridden
+    }
+
+    // get the move
+    public char getMove()
+    {
+        return '?';
+    }
+
+    // is this object the player?
+    public boolean isPlayer()
+    {
+        return false; // by default, no.. must be overridden
+    }
+
+    // is this object a monster?
+    public boolean isMonster()
+    {
+        return (canMove() && !isPlayer());
+    }
+
+    // how much is this object worth, in emeralds?
+    public int getEmeraldValue()
+    {
+        return 0;  // 0 by default, must be overridden
+    }
+
+    // is this space or dirt?
+    public boolean isOpen()
+    {
+        return false;
+    }
+}
+
+/**
+ * Moveable object.
+ */
+abstract class Moveable extends WorldObject
+{
+    public boolean canMove() { return true; }
+}
+
+/**
+ * Edible object.
+ */
+abstract class EdibleObject extends WorldObject
+{
+    public boolean isEdible() { return true; }
+}
+
+/**
+ * Instances of space.
+ */
+class Space extends WorldObject
+{
+    public boolean isOpen() 		{ return true; }
+    public boolean isEdible() 		{ return true; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return true; }
+    public String toString() 		{ return "."; }
+}
+
+/**
+ * Instances of rock.
+ */
+class Rock extends WorldObject
+{
+    public boolean isEdible() 		{ return false; }
+    public boolean hasMass() 		{ return true; }
+    public boolean isVulnerable() 	{ return false; }
+    public String toString() 		{ return "r"; }
+}
+
+/**
+ * Instances of dirt.
+ */
+class Dirt extends EdibleObject
+{
+    public boolean isOpen() 		{ return true; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return false; }
+    public int getEmeraldValue() 	{ return 0; }
+    public String toString() 		{ return "#"; }
+}
+
+/**
+ * Instances of emeralds.
+ */
+class Emerald extends EdibleObject
+{
+    public boolean hasMass() 		{ return true; }
+    public boolean isVulnerable() 	{ return false; }
+    public int getEmeraldValue() 	{ return 1; }
+    public String toString() 		{ return "e"; }
+}
+
+/**
+ * Instances of diamonds.
+ */
+class Diamond extends EdibleObject
+{
+    public boolean hasMass() 		{ return true; }
+    public boolean isVulnerable() 	{ return true; }
+    public int getEmeraldValue() 	{ return 3; }
+    public String toString() 		{ return "d"; }
+}
+
+/**
+ * Instances of aliens.
+ */
+class Alien extends Moveable
+{
+    // best to create a single rand. number generator at the start
+    private static Random rng = new Random();
+
+    public boolean isEdible() 		{ return false; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return true; }
+
+    public char getMove()
+    {
+        switch (rng.nextInt(4))
+        {
+            case 0:  return 'u';
+            case 1:  return 'r';
+            case 2:  return 'd';
+            case 3:  return 'l';
+            default: return '?';
+        }
+    }
+
+    public String toString() { return "a"; }
+}
+
+/**
+ * Instances of the player.
+ */
+class Player extends Moveable
+{
+    public boolean isPlayer() 		{ return true; }
+    public boolean isEdible() 		{ return false; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return true; }
+
+    public String toString() { return "p"; }
+}
