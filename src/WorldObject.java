@@ -1,118 +1,231 @@
-// Author: Manon Chevalier, i6138957 (based on code by Cameron Browne (based on code by Marc Lanctot)).
-// Purpose: create the basic elements of the Emerald Mine game using object oriented programming.
-// The goal for the player (p) is to collect a given amount of emeralds (e) (or diamonds (d), worth 3 emeralds),
-// without leaving the map or getting killed by the alien (a). You can move up, down, left or right by one by pressing
-// u, d, l or r respectively. The alien can move up, down left or right by one. If he collects an emerald, it is lost.
-// WorldObject: creates the classes of all elements (WorldObjects) that go into the game and the methods necessary.
 
+/**
+ * PRA2003: Emerald Mine
+ * @author Manon Chevalier i6138957 based on code from Cameron Browne (based on code from previous PRA2003 years).
+ * Purpose: create the basic elements of the Emerald Mine game using object oriented programming and a GUI
+ * The goal for the player is to collect a given amount of emeralds (or diamonds, worth 3 emeralds),
+ * without leaving the map or getting killed by the alien or by a heavy object falling.
+ * The player can move up, down, left or right by one by pressing the arrow keys.
+ * The alien can move up, down left or right by one. If he collects an emerald, it is lost.
+ * WorldObject.java: Creation of all WorldObjects
+ */
+
+import javax.swing.*;
 import java.util.Random;
-import java.util.Scanner;
 
-//-----------------------------------------------ABSTRACT CLASSES-------------------------------------------------------
+//-----------------------------------------------------------------------------
 
-// WorldObject (includes all possible elements of the game)
-// has abstract methods and default implementations
-public abstract class WorldObject {
+/**
+ * An object that can exist in the world.
+ * Every cell in the world array will contain an object.
+ */
+abstract class WorldObject 
+{
+    // the ImageIcon
+    public abstract ImageIcon getImageIcon();
+
+    // returns true if this object is edible, false otherwise
     public abstract boolean isEdible();
+
+    // returns true if the object can fall (due to gravity), false otherwise
     public abstract boolean hasMass();
+
+    //returns true if the object gets destroyed if a rock falls on it, false otherwise
     public abstract boolean isVulnerable();
-    public boolean canMove() { return false; }
-    public boolean isPlayer(){ return false; }
-    public char getMove(){ return '?'; }
-    public int getEmeraldValue(){ return 0; }
-    final static Random rand = new Random();
-}
 
-// EdibleObject (includes all edible elements of the game)
-abstract class EdibleObject extends WorldObject{
-    public boolean isEdible() { return true; }
-}
+    //-------------------------------------------------------------------------
+    
+    // can this object move?
+    public boolean canMove() 
+    {
+        return false; // immobile by default, must be overridden
+    }
 
-// Moveable (includes all moveable elements of the game)
-abstract class Moveable extends WorldObject {
-    public boolean canMove() { return true; }
-}
+    // get the move
+    public char getMove() 
+    {
+        return '?';
+    }
 
-//---------------------------------------------CONCRETE CLASSES---------------------------------------------------------
-// implement the abstract methods in WorldObject, override default implementations when necessary, override toString
+    // is this object the player?
+    public boolean isPlayer() 
+    {
+        return false; // by default, no.. must be overridden
+    }
 
-// space object, is edible and vulnerable
-class Space extends WorldObject {
-    public boolean isEdible() { return true; }
-    public boolean hasMass() { return false; }
-    public boolean isVulnerable() { return true; }
-    public String toString(){ return "."; }
-}
+    // is this object a monster?
+    public boolean isMonster() 
+    {
+        return (canMove() && !isPlayer());
+    }
 
-// rock object, has mass
-class Rock extends WorldObject {
-    public boolean isEdible() { return false; }
-    public boolean hasMass() { return true; }
-    public boolean isVulnerable() { return false; }
-    public String toString(){ return "r"; }
-}
+    // how much is this object worth, in emeralds?
+    public int getEmeraldValue() 
+    {
+        return 0;  // 0 by default, must be overridden
+    }
 
-// dirt object, is edible
-class Dirt extends EdibleObject {
-    public boolean hasMass() { return false; }
-    public boolean isVulnerable() { return false; }
-    public String toString(){ return "#"; }
-}
+    // is this space or dirt?
+    public boolean isOpen() 
+    {
+        return false;
+    }
 
-// emerald object, has mass, is edible and has a value of 1
-class Emerald extends EdibleObject{
-    public boolean hasMass() { return true; }
-    public boolean isVulnerable() { return false; }
-    public int getEmeraldValue() { return 1; }
-    public String toString(){ return "e"; }
-}
-
-// diamond object, has mass, is vulnerable, is edible and has a value of 3
-class Diamond extends EdibleObject{
-    public boolean hasMass() { return true; }
-    public boolean isVulnerable() { return true; }
-    public int getEmeraldValue() { return 3; }
-    public String toString(){ return "d"; }
-}
-
-// alien object, can move, has mass and is vulnerable
-class Alien extends Moveable {
-    public boolean isEdible() { return false; }
-    public boolean hasMass() { return true; }
-    public boolean isVulnerable() { return true; }
-    public String toString(){ return "a"; }
-
-    // returns a random char move (u/d/l/r)
-    public char getMove() {
-
-        char move;
-        switch (rand.nextInt(4))
-        {
-        case 0: move = 'u'; break;
-        case 1: move = 'd'; break;
-        case 2: move = 'l'; break;
-        case 3: move = 'r'; break;
-        default: move = 'z';                    // should never happen
+    //-------------------------------------------------------------------------
+   
+    /**
+     * Create world object from char, else null if no match.
+     */
+    public static WorldObject createFromChar(final char ch) 
+    {
+     	// Note: This is not good design! Object characters are maintained 
+    	// in two locations, which increases the chance of errors.
+    	// A better (but more complex) approach would be to check each 
+    	// subclass's toString() and return the one that matches ch.
+    	switch(ch) 
+    	{
+            case '.': return new Space();
+            case '#': return new Dirt();
+            case 'e': return new Emerald();
+            case 'd': return new Diamond();
+            case 'r': return new Rock();
+            case 'a': return new Alien();
+            case 'p': return new Player();
         }
-        return move;
+        return null;
     }
 }
 
-// player object, can move, is vulnerable and is the player
-class Player extends Moveable{
-    public boolean isEdible() {  return false; }
-    public boolean hasMass() { return false; }
-    public boolean isVulnerable() { return true; }
-    public String toString(){ return "p"; }
-    public boolean isPlayer() { return true; }
+//-----------------------------------------------------------------------------
 
-    // asks the user to input a move, returns a char (normally: u/d/l/r)
-    public char getMove() {
-        System.out.println("Where to?");
-        final Scanner scan = new Scanner(System.in);
-        String line = scan.nextLine();
-        if (line.length() == 0)
-            return ' ';
-        return line.charAt(0);
+/**
+ * Moveable object.
+ */
+abstract class Moveable extends WorldObject 
+{
+    public boolean canMove() { return true; }
+}
+
+/**
+ * Edible object.
+ */
+abstract class EdibleObject extends WorldObject 
+{
+    public boolean isEdible() { return true; }
+}
+
+/**
+ * Instances of space.
+ */
+class Space extends WorldObject 
+{
+    public boolean isOpen() 		{ return true; }
+    public boolean isEdible() 		{ return true; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return true; }
+    public String toString() 		{ return "."; }
+    public ImageIcon getImageIcon() {
+    return new ImageIcon("./images/space.png");
+}
+}
+
+/**
+ * Instances of rock.
+ */
+class Rock extends WorldObject 
+{
+    public boolean isEdible() 		{ return false; }
+    public boolean hasMass() 		{ return true; }
+    public boolean isVulnerable() 	{ return false; }
+    public String toString() 		{ return "r"; }
+    public ImageIcon getImageIcon() {
+        return new ImageIcon("./images/rock.png");
+    }
+}
+
+/**
+ * Instances of dirt.
+ */
+class Dirt extends EdibleObject 
+{
+    public boolean isOpen() 		{ return true; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return false; }
+    public int getEmeraldValue() 	{ return 0; }
+    public String toString() 		{ return "#"; }
+    public ImageIcon getImageIcon() {
+        return new ImageIcon("./images/dirt.png");
+    }
+}
+
+/**
+ * Instances of emeralds.
+ */
+class Emerald extends EdibleObject 
+{
+    public boolean hasMass() 		{ return true; }
+    public boolean isVulnerable() 	{ return false; }
+    public int getEmeraldValue() 	{ return 1; }
+    public String toString() 		{ return "e"; }
+    public ImageIcon getImageIcon() {
+        return new ImageIcon("./images/emerald.png");
+    }
+}
+
+/**
+ * Instances of diamonds.
+ */
+class Diamond extends EdibleObject 
+{
+    public boolean hasMass() 		{ return true; }
+    public boolean isVulnerable() 	{ return true; }
+    public int getEmeraldValue() 	{ return 3; }
+    public String toString() 		{ return "d"; }
+    public ImageIcon getImageIcon() {
+        return new ImageIcon("./images/diamond.png");
+    }
+}
+
+/**
+ * Instances of aliens.
+ */
+class Alien extends Moveable 
+{
+    // best to create a single rand. number generator at the start
+    private static Random rng = new Random();
+
+    public boolean isEdible() 		{ return false; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return true; }
+    public char getMove() 
+    {
+        switch (rng.nextInt(4))
+        {
+        case 0:  return 'u';
+        case 1:  return 'r';
+        case 2:  return 'd';
+        case 3:  return 'l';
+        default: return '?';
+        }
+    }
+    public String toString() { return "a"; }
+    public ImageIcon getImageIcon() {
+        return new ImageIcon("./images/alien.png");
+    }
+}
+
+/**
+ * Instances of the player.
+ */
+class Player extends Moveable 
+{
+    public boolean isPlayer() 		{ return true; }
+    public boolean isEdible() 		{ return false; }
+    public boolean hasMass() 		{ return false; }
+    public boolean isVulnerable() 	{ return true; }
+
+    public String toString() { return "p"; }
+    public ImageIcon getImageIcon() {
+        return new ImageIcon("./images/player.png");
     }
 }

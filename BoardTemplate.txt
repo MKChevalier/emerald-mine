@@ -1,9 +1,0 @@
-number of rows R
-number of columns C
-number of emeralds required to win E
-Followed by R lines containing C characters
-
-characters:
-1 player p
-1 alien a (or more)
-there should be enough emeralds and diamonds for the total worth to be greater or equal to E
