@@ -1,39 +1,59 @@
 /**
- * PRA2003: Assignment 2 sample solution.
- * Author: Cameron Browne (based on code by Marc Lanctot).
- *
- * Note: if you use this code, add your name and ID to this header!
+ * PRA2003 Assignment 4 sample solution.
+ * @author cambolbro (based on code from previous years).
  */
 
 /**
- * Main class.
+ * Main app class.
  */
-class Main
+class Main 
 {
-    /**
-     * Main entry point.
-     */
-    public static void main(final String[] args)
+	/**
+	 * Main game loop.
+	 */
+    public static void mainLoop() 
     {
-        final World world = new World(10, 10, 7);
-
-        // Play the game
-        int outcome = 0;
-        while (outcome == 0)
+    	// Load the world
+        World world;
+        try 
         {
-            System.out.println(world);
-            final char ch = world.getMove();
-            if (!world.validMove(ch))
-                System.out.println("Not a valid move. Try one of: u,d,l,r.");
-            else
-                outcome = world.applyMove(ch);
+        	// Check the example
+            world = new World("example.txt");
         }
+        catch(Exception e) 
+        {
+            e.printStackTrace();
+            return;
+        }
+        world = new World(12, 12, 16);
 
-        // Show the result
-        System.out.println(world + "\n");
-        if (outcome == 1)
+        // Create and initialize the GUI
+        GUI gui = new GUI(world);
+        gui.init();
+
+        // Start the game loop
+        int outcome = World.Playing;
+        while (outcome == World.Playing) 
+        {
+             char move = world.getMove();
+            outcome = world.applyMove(move);
+        }
+        System.out.println(world);
+        System.out.println("");
+
+        if (outcome == World.Win)
             System.out.println("Way to go!");
         else
             System.out.println(":(  better luck next time...");
     }
+
+    /**
+     * Main entry point.
+     */
+    public static void main(String[] args) 
+    {
+        System.out.println("Starting main game loop...");
+        mainLoop();
+    }
 }
+
