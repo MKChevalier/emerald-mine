@@ -4,9 +4,9 @@ public enum GameDifficulty {
      * URL=http://tutorials.jenkov.com/java/enums.html
      */
 
-    HIGH  (1),  //calls constructor with value 3
-    MEDIUM(3),  //calls constructor with value 2
-    LOW   (5)   //calls constructor with value 1
+    HIGH  (6),  //calls constructor with value 3
+    MEDIUM(10),  //calls constructor with value 2
+    LOW   (15)   //calls constructor with value 1
     ; // semicolon needed when fields / methods follow
 
 

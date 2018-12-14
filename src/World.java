@@ -80,18 +80,14 @@ class World
     {
         this.rows = rows;
         this.cols = cols;
-        // this.initialEmeralds = emeralds;
-        // this.emeraldsRemaining = emeralds;
 
         // TODO: check that the number of emeralds & diamonds matches the world size (rows*cols)
-
 
         // This should decrease every time a diamond/emerald is collected or crushed
         this.remainingEmeraldsInWorld =  emeralds*Emerald.emeraldValue + diamonds * Diamond.emeraldValue;
 
         // This should decrease every time the player collects a diamond/emerald
         this.remainingEmeraldsToWin = remainingEmeraldsInWorld - gameDifficulty.getAcceptableEmeraldLosses();
-
 
         createRandomly(emeralds, diamonds);
     }
@@ -135,7 +131,6 @@ class World
     public int getRemainingEmeraldsToWin() {
         return remainingEmeraldsToWin;
     }
-
 
 
     /**
@@ -270,62 +265,67 @@ class World
         return (row >= 0 && row < rows && col >= 0 && col < cols);
     }
 
-    //-------------------------------------------------------------------------
+     //-------------------------------------------------------------------------
 
     /**
-     * @return Character entered by player.
-     *  Not used in Assignment 4.
-     * public char getMove()
-    {
-        System.out.print("Where to? ");
-        Scanner scanner = new Scanner(System.in);
-        String line = scanner.nextLine();
-        
-        if (line.length() == 0)
-            return ' ';
-        
-        return line.charAt(0);
-    }
-    */
-
-    /**
-     * @return Whether char input is a valid move.
+     * @return Result of suggested move: Playing / Won / Lost.
      */
-    // public boolean validMove(final char ch)
-    // {
-    // 	return ch == 'u' || ch == 'd' || ch == 'l' || ch == 'r';
-    // }
+    public GameStatus applyMove(final char ch)
+    {
+
+        synchronized (this) {
+
+            playerMove(ch);
+
+            //    	if (alienAt != null)
+            //    	{
+            //    		final char chAlien = world[alienAt.row][alienAt.col].getMove();
+            //    		alienMove(chAlien);
+            //    	}
+
+            // Apply gravity
+            if (applyGravity()) {
+                status = GameStatus.LOST;  // player killed by something dropping on them
+            }
+
+            // If there is less emerald value in World than what is still required to have a chance to win, game is over
+            if (remainingEmeraldsInWorld < remainingEmeraldsToWin) {
+                status = GameStatus.LOST;
+            }
+        }
+
+    	return status;
+    }
+
 
     //-------------------------------------------------------------------------
 
     /**
      * @return Result of suggested move: Playing / Win / Loss.
      */
-    public GameStatus applyMove(final char ch)
+    public GameStatus moveMonsters()
     {
-    	playerMove(ch);
+        synchronized (this) {
 
-    	if (alienAt != null)
-    	{
-    		final char chAlien = world[alienAt.row][alienAt.col].getMove();
-    		//System.out.println("Alien steps '" + chAlien + "'.");
-    		alienMove(chAlien);
-    	}
+            if (alienAt != null) {
+                final char chAlien = world[alienAt.row][alienAt.col].getMove();
+                alienMove(chAlien);
+            }
 
-    	// If there is less emerald value in World than what is still required to have a chance to win, game is over
-    	if (remainingEmeraldsInWorld < remainingEmeraldsToWin)
-        {
-            status = GameStatus.LOST;
+            // Apply gravity
+            if (applyGravity()) {
+                status = GameStatus.LOST;  // player killed by something dropping on them
+            }
+
+            // If there is less emerald value in World than what is still required to have a chance to win, game is over
+            if (remainingEmeraldsInWorld < remainingEmeraldsToWin) {
+                status = GameStatus.LOST;
+            }
         }
 
-    	// Apply gravity
-        if (applyGravity()) {
-            status = GameStatus.LOST;  // player killed by something dropping on them
-        }
-        
-    	return status;
+        return status;
     }
-   
+
     //-------------------------------------------------------------------------
 
     /**
@@ -435,76 +435,73 @@ class World
 
     //-------------------------------------------------------------------------
 
-    private boolean isObjectSupported(int row, int col) {
-        if (supported!=null && row == supported.row && col == supported.col){
-            return true;
-        }
-        return false;
-    }
-
-
     /**
      * @return Whether an object with mass falls on the player.
      */
     public boolean applyGravity()
     {
 
-        int row;
-        int rowMass;
-        WorldObject object;
-        WorldObject crushedObject;
         boolean fellOnPlayer = false;  // whether an object with mass fell on the player
 
-        // Check gravity one column at the time
-        for (int col = 0; col < cols; col++){
+        //synchronized(this) {
 
-            // Start at rows-2 because gravity does not apply to objects on bottom row.
-            row = rows - 2;
+            int row;
+            int rowMass;
+            WorldObject object;
+            WorldObject crushedObject;
 
-            // Check gravity one row at the time, bottom up
-            while(row >= 0) {
+            // Check gravity one column at the time
+            for (int col = 0; col < cols; col++) {
 
-                object = world[row][col];
+                // Start at rows-2 because gravity does not apply to objects on bottom row.
+                row = rows - 2;
 
-                // Check if gravity can be applied to object
-                if (object.hasMass() && !isObjectSupported(row,col)) {
+                // Check gravity one row at the time, bottom up
+                while (row >= 0) {
 
-                    rowMass = row;
+                    object = world[row][col];
 
-                    // While objects below are vulnerable, fall through
-                    while (world[rowMass+1][col].isVulnerable()){
+                    // Check if gravity can be applied to object
+                    if (object.hasMass() && !isObjectSupported(row, col)) {
 
-                        // Move falling object down one level
-                        world[rowMass][col] = new Space();
-                        rowMass++;
-                        crushedObject = world[rowMass][col];  // Store the object that got crushed
-                        world[rowMass][col] = object;
+                        rowMass = row;
 
-                        // Check which object got crushed and change game status/score accordingly
-                        if (crushedObject.isPlayer()) {
-                            fellOnPlayer = true;
-                        } else if (crushedObject.isMonster()) {
-                            System.out.println("Alien squashed!");
-                            alienAt = null;  // remove the alien from the game
-                        } else {
-                            remainingEmeraldsInWorld -= crushedObject.getEmeraldValue();
+                        // While objects below are vulnerable, fall through
+                        while (world[rowMass + 1][col].isVulnerable()) {
+
+                            // Move falling object down one level
+                            world[rowMass][col] = new Space();
+                            rowMass++;
+                            crushedObject = world[rowMass][col];  // Store the object that got crushed
+                            world[rowMass][col] = object;
+
+                            // Check which object got crushed and change game status/score accordingly
+                            if (crushedObject.isPlayer()) {
+                                fellOnPlayer = true;
+                            } else if (crushedObject.isMonster()) {
+                                System.out.println("Alien squashed!");
+                                alienAt = null;  // remove the alien from the game
+                            } else {
+                                remainingEmeraldsInWorld -= crushedObject.getEmeraldValue();
+                            }
+
+                            // If mass has reached the bottom of the board, stop falling (exit while loop)
+                            if (rowMass == rows - 1) {
+                                break;
+                            }
                         }
 
-                        // If mass has reached the bottom of the board, stop falling (exit while loop)
-                        if (rowMass==rows-1) {
-                            break;
-                        }
+                        // The falling object is at its lowest level, look for the gravity one row above
+                        row--;
+
+                    } else {
+                        // Object cannot fall, look for the gravity one row above
+                        row--;
                     }
-
-                    // The falling object is at its lowest level, look for the gravity one row above
-                    row--;
-
-                } else {
-                    // Object cannot fall, look for the gravity one row above
-                    row--;
                 }
             }
-        }
+
+        //}
 
         return fellOnPlayer;
 
@@ -550,6 +547,15 @@ class World
             str += "\n";
         }
         return str;
+    }
+
+    //-------------------------------------------------------------------------
+
+    private boolean isObjectSupported(int row, int col) {
+        if (supported!=null && row == supported.row && col == supported.col){
+            return true;
+        }
+        return false;
     }
     
 }

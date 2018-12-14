@@ -38,7 +38,7 @@ class WorldPanel extends JPanel
         redrawWorld();
     }
 
-    public void redrawWorld()
+    public synchronized void redrawWorld()
     {
         for (int r = 0; r < rows; r++)
             for (int c = 0; c < cols; c++)

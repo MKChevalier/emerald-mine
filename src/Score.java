@@ -11,7 +11,7 @@ public class Score {
         this.world = world;
     }
 
-    public void Update()
+    public synchronized void Update()
     {
         gameStatus = world.getStatus();
         remainingEmeraldsInWorld = world.getRemainingEmeraldsInWorld();

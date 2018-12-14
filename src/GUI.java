@@ -20,30 +20,36 @@ import java.awt.*;
 /**
  * Main GUI class.
  */
-class GUI
-{
+class GUI {
 
     private World world;
     private Score score;
+    WorldPanel worldPanel;
+    ScorePanel scorePanel;
+
+    JFrame frame;
+
 
     /**
      * Constructor.
      */
-    public GUI(World world, Score score){
+    public GUI(World world, Score score) {
         this.world = world;
         this.score = score;
+    }
+
+    public void redraw() {
+        worldPanel.redrawWorld();
+        score.Update();
+        scorePanel.redrawScore();
     }
 
     /**
      * Initialise the GUI.
      */
-    public void init()
-    {
+    public void init() {
 
-        JFrame frame;
         JLabel rulesLabel;
-        WorldPanel worldPanel;
-        ScorePanel scorePanel;
 
         // create new frame with a title and minimum 640x640 dimensions
         frame = new JFrame("Welcome to Emerald Mine, PRA 2003 edition.");
@@ -51,7 +57,7 @@ class GUI
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Create JLabel for the rules
-        rulesLabel = new JLabel("<html>Here are the rules: <br>You are the player. Your aim is to collect " + world.getRemainingEmeraldsToWin()+
+        rulesLabel = new JLabel("<html>Here are the rules: <br>You are the player. Your aim is to collect " + world.getRemainingEmeraldsToWin() +
                 " emeralds without leaving the map or getting killed by the alien. <br>" +
                 "You can also collect diamonds, each diamond is worth three emeralds. <br>" +
                 "The alien can move up, down left or right by one and he can steal emeralds. <br>" +
@@ -74,6 +80,14 @@ class GUI
         frame.pack();
         frame.setVisible(true);
 
-     }
+    }
+
+    /**
+     * Initialise the GUI.
+     */
+    public void dispose() {
+        frame.dispose();
+    }
+
 
 }

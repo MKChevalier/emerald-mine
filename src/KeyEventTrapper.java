@@ -40,7 +40,7 @@ public class KeyEventTrapper implements KeyListener
     @Override
     public void keyReleased(KeyEvent e) {}
 
-    private void updateWorld(KeyEvent e){
+    private synchronized void updateWorld(KeyEvent e){
         // read the key pressed and transform it into a character
         switch (e.getKeyCode()) {
             case KeyEvent.VK_UP:

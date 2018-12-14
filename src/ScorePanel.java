@@ -36,7 +36,7 @@ class ScorePanel extends JPanel
     }
 
 
-    public void redrawScore()
+    public synchronized void redrawScore()
     {
         GameStatus gameStatus;
         String statusString;

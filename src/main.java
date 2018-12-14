@@ -10,7 +10,7 @@ public class main {
         init();
     }
 
-    private static void  init()
+    public static void  init()
     {
         final boolean READWORLDFROMFILE = false;
 
@@ -39,7 +39,7 @@ public class main {
             }
         }
         else {
-            world = new World(20, 20, 50, 3, GameDifficulty.MEDIUM);
+            world = new World(20, 20, 30, 15, GameDifficulty.MEDIUM);
         }
 
         if (world!=null)
@@ -49,6 +49,10 @@ public class main {
 
             gui = new GUI(world, score);
             gui.init();
+
+            Thread sim = new Simulator(world, gui);
+            sim.start();
+
         }
 
     }
