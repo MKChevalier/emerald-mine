@@ -64,6 +64,7 @@ class World
 
     private Coordinates playerAt = null;           // player location
     private Coordinates alienAt  = null;           // alien location
+
     private Coordinates supported = null;          // player supports this cell
 
     private GameStatus status;
@@ -318,15 +319,9 @@ class World
         }
 
     	// Apply gravity
-        if 
-        (
-        	applyGravity
-        	(
-        		supported == null ? -1 : supported.row, 
-        		supported == null ? -1 : supported.col
-       		)
-        )
-        	status = GameStatus.LOST;  // player killed by something dropping on them
+        if (applyGravity()) {
+            status = GameStatus.LOST;  // player killed by something dropping on them
+        }
         
     	return status;
     }
@@ -440,46 +435,79 @@ class World
 
     //-------------------------------------------------------------------------
 
+    private boolean isObjectSupported(int row, int col) {
+        if (supported!=null && row == supported.row && col == supported.col){
+            return true;
+        }
+        return false;
+    }
+
+
     /**
      * @return Whether an object with mass falls on the player.
      */
-    public boolean applyGravity(int exceptRow, int exceptCol) 
+    public boolean applyGravity()
     {
+
+        int row;
+        int rowMass;
+        WorldObject object;
+        WorldObject crushedObject;
         boolean fellOnPlayer = false;  // whether an object with mass fell on the player
 
-        // Note: Gravity should really be a loop, so that objects fall as far as
-        // they need to each turn. But this was not specified in Assignment 3.
-        
-        // Apply gravity from the bottom up! 
-        // So if there are two rocks, one on top of the other, they both fall.
-        // Start at rows-2 because gravity does not apply to objects on bottom row.
-        for (int row = rows-2; row >= 0; row--) 
-            for (int col = 0; col < cols; col++) 
-            {
-                if (row == exceptRow && col == exceptCol) 
-                    continue;  // do not apply gravity here
-               
-                int rowBelow = row+1;  // because rows are indexed bottom up
+        // Check gravity one column at the time
+        for (int col = 0; col < cols; col++){
 
-                if (world[row][col].hasMass() && world[rowBelow][col].isVulnerable()) 
-                {
-                	// Object with mass drops a row
-                    if (world[rowBelow][col].isPlayer())
-                    {
-                    	fellOnPlayer = true;  // player squashed
+            // Start at rows-2 because gravity does not apply to objects on bottom row.
+            row = rows - 2;
+
+            // Check gravity one row at the time, bottom up
+            while(row >= 0) {
+
+                object = world[row][col];
+
+                // Check if gravity can be applied to object
+                if (object.hasMass() && !isObjectSupported(row,col)) {
+
+                    rowMass = row;
+
+                    // While objects below are vulnerable, fall through
+                    while (world[rowMass+1][col].isVulnerable()){
+
+                        // Move falling object down one level
+                        world[rowMass][col] = new Space();
+                        rowMass++;
+                        crushedObject = world[rowMass][col];  // Store the object that got crushed
+                        world[rowMass][col] = object;
+
+                        // Check which object got crushed and change game status/score accordingly
+                        if (crushedObject.isPlayer()) {
+                            fellOnPlayer = true;
+                        } else if (crushedObject.isMonster()) {
+                            System.out.println("Alien squashed!");
+                            alienAt = null;  // remove the alien from the game
+                        } else {
+                            remainingEmeraldsInWorld -= crushedObject.getEmeraldValue();
+                        }
+
+                        // If mass has reached the bottom of the board, stop falling (exit while loop)
+                        if (rowMass==rows-1) {
+                            break;
+                        }
                     }
-                    else if (world[rowBelow][col].isMonster())
-                    {
-                    	System.out.println("Alien squashed!");
-                    	alienAt = null;  // remove the alien from the game
-                    }
-                    
-                    // Move this object down a row
-                    world[rowBelow][col] = world[row][col];
-                    world[row][col] = new Space();    
+
+                    // The falling object is at its lowest level, look for the gravity one row above
+                    row--;
+
+                } else {
+                    // Object cannot fall, look for the gravity one row above
+                    row--;
                 }
             }
+        }
+
         return fellOnPlayer;
+
     }
     
     //-------------------------------------------------------------------------
