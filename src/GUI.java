@@ -58,9 +58,9 @@ class GUI {
 
         // Create JLabel for the rules
         rulesLabel = new JLabel("<html>Here are the rules: <br>You are the player. Your aim is to collect " + world.getRemainingEmeraldsToWin() +
-                " emeralds without leaving the map or getting killed by the alien. <br>" +
+                " emeralds without getting killed by the monsters or falling objects. <br>" +
                 "You can also collect diamonds, each diamond is worth three emeralds. <br>" +
-                "The alien can move up, down left or right by one and he can steal emeralds. <br>" +
+                "The monsters can steal emeralds, so be quick. <br>" +
                 "You can move up, down, left or right by one by pressing the arrow keys. </html>");
 
 

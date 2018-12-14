@@ -10,7 +10,10 @@
  * World.java: Creation of World Class and necessary methods
  */
 
+import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -76,7 +79,7 @@ class World
     /**
      * Constructor to create a random world.
      */
-    public World(int rows, int cols, int emeralds, int diamonds, int aliens, int rocks,  GameDifficulty gameDifficulty)
+    public World(int rows, int cols, int emeralds, int diamonds, int rocks, int spaces, int aliens, int spaceships, int bugs, GameDifficulty gameDifficulty)
     {
         this.rows = rows;
         this.cols = cols;
@@ -89,7 +92,7 @@ class World
         // This should decrease every time the player collects a diamond/emerald
         this.remainingEmeraldsToWin = remainingEmeraldsInWorld - gameDifficulty.getAcceptableEmeraldLosses();
 
-        createRandomly(emeralds, diamonds, aliens, rocks);
+        createRandomly(emeralds, diamonds, rocks, spaces, aliens, spaceships, bugs);
     }
 
    /**
@@ -136,7 +139,7 @@ class World
     /**
      * World creation.
      */
-    private void createRandomly(int emeralds, int diamonds, int aliens, int rocks)
+    private void createRandomly(int emeralds, int diamonds, int rocks, int spaces, int aliens, int spaceships, int bugs)
     {
      	// Create objects, shuffle and add to world
     	// Including an optimisation by Felix Quinque: add elements then shuffle 
@@ -146,9 +149,19 @@ class World
 		// Add the player
 		objects.add(new Player());
 
-		// Add the alien
+		// Add the aliens
         for (int i=0; i<aliens; i++) {
             objects.add(new Alien());
+        }
+
+        // Add the spaceships
+        for (int i=0; i<spaceships; i++) {
+            objects.add(new Spaceship());
+        }
+
+        // Add the bugs
+        for (int i=0; i<bugs; i++) {
+            objects.add(new Bug());
         }
 		
 		// Add the emeralds
@@ -164,13 +177,15 @@ class World
 		// for (int r = 0; r < numRocks; r++)
         for (int r = 0; r < rocks; r++)
 			objects.add(new Rock());
-		
-		// Fill the rest with dirt
-		while (objects.size() < rows * cols) {
-            objects.add(new Dirt());
-            if ((objects.size() < rows * cols)) objects.add(new Space());
-        }
-    	
+
+        // Add  some spaces
+        for (int r = 0; r < spaces; r++)
+            objects.add(new Space());
+
+    // Fill the rest with dirt
+		while (objects.size() < rows * cols)
+		    objects.add(new Dirt());
+
 		// Shuffle objects and put in world array
 		Collections.shuffle(objects);
 
@@ -200,18 +215,15 @@ class World
      * @throws BadFileFormatException
      * @throws IOException
      */
-     private void createFromFile(final String filename, GameDifficulty gameDifficulty) throws BadFileFormatException, IOException
-     {
-         // TODO: need to fix createFromFile methods
-     }
- /*    {
-        final BufferedReader in = 
+    private void createFromFile(final String filename, GameDifficulty gameDifficulty) throws BadFileFormatException, IOException
+    {
+        final BufferedReader in =
         		new BufferedReader(new InputStreamReader(new FileInputStream(filename)));
 
         // Assume that first three lines are properly formatted (as per Assignment 3).
         this.rows = Integer.parseInt(in.readLine());
         this.cols = Integer.parseInt(in.readLine());
-        this.emeraldsRemaining = Integer.parseInt(in.readLine());
+        this.remainingEmeraldsToWin = Integer.parseInt(in.readLine()); // this.emeraldsRemaining
 
         world = new WorldObject[rows][cols];
 
@@ -252,13 +264,16 @@ class World
         if (row != rows)
             throw new BadFileFormatException("Not enough rows (" + rows + ")", -1, -1);
 
-        if (emeraldsInWorld < emeraldsRemaining)
+        if (emeraldsInWorld < remainingEmeraldsToWin)
             throw new BadFileFormatException("Not enough emeralds in the world: " + emeraldsInWorld, -1, -1);
 
         // keep these two values (they will never change)
-        initialEmeralds = emeraldsInWorld;
+        this.remainingEmeraldsInWorld = emeraldsInWorld;
         in.close();
-    }*/
+
+        // game is now active
+        status = GameStatus.PLAYING;
+    }
 
     //-------------------------------------------------------------------------
     
@@ -422,6 +437,8 @@ class World
             monsterNext = stepTo(coordMonster, ch);
             if (inBounds(monsterNext.row,monsterNext.col))
                 moveMonsterHelper(coordMonster,monsterNext);
+            else
+                object.changeDirection();
         }
 
     }
@@ -444,6 +461,10 @@ class World
             remainingEmeraldsInWorld -= nextObject.getEmeraldValue();
             world[monsterNext.row][monsterNext.col] =  monster;
             world[monsterAt.row][monsterAt.col] = new Space();
+        }
+        else {
+            // Hit an obstacle, change direction (not for aliens)
+            monster.changeDirection();
         }
     }
 
