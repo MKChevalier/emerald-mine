@@ -39,7 +39,7 @@ public class main {
             }
         }
         else {
-            world = new World(20, 20, 30, 15, GameDifficulty.MEDIUM);
+            world = new World(20, 20, 40, 5, 3, 10,GameDifficulty.MEDIUM);
         }
 
         if (world!=null)

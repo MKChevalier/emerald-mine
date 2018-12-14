@@ -13,8 +13,6 @@ public class KeyEventTrapper implements KeyListener
     private Score score;
     private ScorePanel scorePanel;
 
-    private GameStatus gameStatus = GameStatus.PLAYING;
-
     //constructor
     KeyEventTrapper(World world, WorldPanel worldPanel, Score score, ScorePanel scorePanel){
         this.world      = world;
@@ -44,19 +42,19 @@ public class KeyEventTrapper implements KeyListener
         // read the key pressed and transform it into a character
         switch (e.getKeyCode()) {
             case KeyEvent.VK_UP:
-                gameStatus = world.applyMove('u');
+                world.applyMove('u');
                 break;
             case KeyEvent.VK_RIGHT:
-                gameStatus = world.applyMove('r');
+                world.applyMove('r');
                 break;
             case KeyEvent.VK_DOWN:
-                gameStatus = world.applyMove('d');
+                world.applyMove('d');
                 break;
             case KeyEvent.VK_LEFT:
-                gameStatus = world.applyMove('l');
+                world.applyMove('l');
                 break;
             default:
-                gameStatus = world.applyMove('?');
+                world.applyMove('?');
                 System.out.println("Invalid key");
                 break;
         }

@@ -33,9 +33,10 @@ class Simulator extends Thread
 				System.exit(-1);
 			}
 
-
-			world.moveMonsters();
-			gui.redraw();
+			if (world.getStatus() == GameStatus.PLAYING) {
+				world.moveMonsters();
+				gui.redraw();
+			}
 
 
 			// TODO: get "Play Again" to work
@@ -53,6 +54,16 @@ class Simulator extends Thread
 					System.exit(-1);
 				}
 			}*/
+
+			if (world.getStatus() != GameStatus.PLAYING) {
+
+				ReplayDialog rpd = new ReplayDialog();
+
+				if (rpd.AskReplayQuestion()==0){
+					// Quit game
+					System.exit(-1);
+				}
+			}
 
 
 

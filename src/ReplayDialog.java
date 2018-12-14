@@ -7,7 +7,7 @@ public class ReplayDialog {
 
     public int AskReplayQuestion() {
         //Custom button text
-        Object[] options = {"Play again", "Quit game"};
+/*        Object[] options = {"Play again", "Quit game"};
         int n = JOptionPane.showOptionDialog(null,
                 "Would you like to play again?",
                 "Game Over",
@@ -17,7 +17,21 @@ public class ReplayDialog {
                 options,
                 options[1]);
 
+        return n;*/
+
+        Object[] options = {"Quit game"};
+        int n = JOptionPane.showOptionDialog(null,
+                "Game is over",
+                "Game Over",
+                JOptionPane.YES_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]);
+
         return n;
+
+
 
     }
 

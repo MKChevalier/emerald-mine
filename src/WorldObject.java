@@ -67,7 +67,7 @@ abstract class WorldObject
     }
 
     // is this space or dirt?
-    public boolean isOpen() 
+    public boolean isDirt()
     {
         return false;
     }
@@ -122,7 +122,6 @@ abstract class EdibleObject extends WorldObject
  */
 class Space extends WorldObject 
 {
-    public boolean isOpen() 		{ return true; }
     public boolean isEdible() 		{ return true; }
     public boolean hasMass() 		{ return false; }
     public boolean isVulnerable() 	{ return true; }
@@ -151,7 +150,7 @@ class Rock extends WorldObject
  */
 class Dirt extends EdibleObject 
 {
-    public boolean isOpen() 		{ return true; }
+    public boolean isDirt() 		{ return true; }
     public boolean hasMass() 		{ return false; }
     public boolean isVulnerable() 	{ return false; }
     // public int getEmeraldValue() 	{ return 0; }
@@ -208,9 +207,10 @@ class Alien extends Moveable
     {
         switch (rng.nextInt(4))
         {
-        case 0:  return 'u';
-        case 1:  return 'r';
-        case 2:  return 'd';
+
+        case 0: return 'u';
+        case 1: return 'r';
+        case 2: return 'd';
         case 3:  return 'l';
         default: return '?';
         }

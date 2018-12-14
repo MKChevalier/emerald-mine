@@ -63,7 +63,7 @@ class World
     private final Random rng = new Random();
 
     private Coordinates playerAt = null;           // player location
-    private Coordinates alienAt  = null;           // alien location
+    // private Coordinates alienAt  = null;           // alien location
 
     private Coordinates supported = null;          // player supports this cell
 
@@ -76,7 +76,7 @@ class World
     /**
      * Constructor to create a random world.
      */
-    public World(int rows, int cols, int emeralds, int diamonds, GameDifficulty gameDifficulty)
+    public World(int rows, int cols, int emeralds, int diamonds, int aliens, int rocks,  GameDifficulty gameDifficulty)
     {
         this.rows = rows;
         this.cols = cols;
@@ -89,7 +89,7 @@ class World
         // This should decrease every time the player collects a diamond/emerald
         this.remainingEmeraldsToWin = remainingEmeraldsInWorld - gameDifficulty.getAcceptableEmeraldLosses();
 
-        createRandomly(emeralds, diamonds);
+        createRandomly(emeralds, diamonds, aliens, rocks);
     }
 
    /**
@@ -136,7 +136,7 @@ class World
     /**
      * World creation.
      */
-    private void createRandomly(int emeralds, int diamonds)
+    private void createRandomly(int emeralds, int diamonds, int aliens, int rocks)
     {
      	// Create objects, shuffle and add to world
     	// Including an optimisation by Felix Quinque: add elements then shuffle 
@@ -145,9 +145,11 @@ class World
 				
 		// Add the player
 		objects.add(new Player());
-		
+
 		// Add the alien
-		objects.add(new Alien());
+        for (int i=0; i<aliens; i++) {
+            objects.add(new Alien());
+        }
 		
 		// Add the emeralds
 		for (int e = 0; e < emeralds; e++)
@@ -158,13 +160,16 @@ class World
 			objects.add(new Diamond());
 
 		// Add some rocks
-		final int numRocks = 4 + rng.nextInt(3);
-		for (int r = 0; r < numRocks; r++) 
+		//final int numRocks = 4 + rng.nextInt(3);
+		// for (int r = 0; r < numRocks; r++)
+        for (int r = 0; r < rocks; r++)
 			objects.add(new Rock());
 		
 		// Fill the rest with dirt
-		while (objects.size() < rows * cols) 
-			objects.add(new Dirt());
+		while (objects.size() < rows * cols) {
+            objects.add(new Dirt());
+            if ((objects.size() < rows * cols)) objects.add(new Space());
+        }
     	
 		// Shuffle objects and put in world array
 		Collections.shuffle(objects);
@@ -179,8 +184,8 @@ class World
 		
 			if (world[row][col].isPlayer())
 				playerAt = new Coordinates(row, col);
-			else if (world[row][col].isMonster())
-				alienAt = new Coordinates(row, col);
+//			else if (world[row][col].isMonster())
+//				alienAt = new Coordinates(row, col);
 		}
 
         // game is now active
@@ -270,19 +275,14 @@ class World
     /**
      * @return Result of suggested move: Playing / Won / Lost.
      */
-    public GameStatus applyMove(final char ch)
+    public void applyMove(final char ch)
     {
 
         synchronized (this) {
 
+            // Move player
             playerMove(ch);
 
-            //    	if (alienAt != null)
-            //    	{
-            //    		final char chAlien = world[alienAt.row][alienAt.col].getMove();
-            //    		alienMove(chAlien);
-            //    	}
-
             // Apply gravity
             if (applyGravity()) {
                 status = GameStatus.LOST;  // player killed by something dropping on them
@@ -293,38 +293,8 @@ class World
                 status = GameStatus.LOST;
             }
         }
-
-    	return status;
     }
 
-
-    //-------------------------------------------------------------------------
-
-    /**
-     * @return Result of suggested move: Playing / Win / Loss.
-     */
-    public GameStatus moveMonsters()
-    {
-        synchronized (this) {
-
-            if (alienAt != null) {
-                final char chAlien = world[alienAt.row][alienAt.col].getMove();
-                alienMove(chAlien);
-            }
-
-            // Apply gravity
-            if (applyGravity()) {
-                status = GameStatus.LOST;  // player killed by something dropping on them
-            }
-
-            // If there is less emerald value in World than what is still required to have a chance to win, game is over
-            if (remainingEmeraldsInWorld < remainingEmeraldsToWin) {
-                status = GameStatus.LOST;
-            }
-        }
-
-        return status;
-    }
 
     //-------------------------------------------------------------------------
 
@@ -395,41 +365,85 @@ class World
     //-------------------------------------------------------------------------
 
     /**
+     * @return Result of suggested move: Playing / Win / Loss.
+     */
+    public void moveMonsters()
+    {
+        synchronized (this) {
+
+//            if (alienAt != null) {
+//                final char chAlien = world[alienAt.row][alienAt.col].getMove();
+//                moveMonster(chAlien);
+//            }
+
+            moveMonster();
+
+            // Apply gravity
+            if (applyGravity()) {
+                status = GameStatus.LOST;  // player killed by something dropping on them
+            }
+
+            // If there is less emerald value in World than what is still required to have a chance to win, game is over
+            if (remainingEmeraldsInWorld < remainingEmeraldsToWin) {
+                status = GameStatus.LOST;
+            }
+        }
+
+    }
+
+    //-------------------------------------------------------------------------
+
+    /**
      * Make a random alien move.
      */
-    public void alienMove(final char ch) 
-    {
-        // Alien is dead and no longer active
-    	if (alienAt == null)
-    		return;
-    	
-    	final Coordinates alienNext = stepTo(alienAt, ch);
+    public void moveMonster() {
+        char ch;
+        WorldObject object;
+        Coordinates monsterNext;
 
-        // Alien tries to move outside the board
-        if (!inBounds(alienNext.row, alienNext.col)) 
-        {
-        	// world[alienAt.row][alienAt.col] = new Space();
-        	// alienAt = null;  // alien exits the game
+
+        List<Coordinates> monstersCoord = new ArrayList<>();
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                object = world[row][col];
+                if (object.isMonster()) {
+                    Coordinates monsterAt = new Coordinates(row, col);
+                    monstersCoord.add(monsterAt);
+                }
+            }
+        }
+
+        for (Coordinates coordMonster: monstersCoord) {
+            object = world[coordMonster.row][coordMonster.col];
+            // System.out.println(object.toString());
+            ch = object.getMove();
+            // System.out.println(ch);
+            monsterNext = stepTo(coordMonster, ch);
+            if (inBounds(monsterNext.row,monsterNext.col))
+                moveMonsterHelper(coordMonster,monsterNext);
+        }
+
+    }
+
+    private void moveMonsterHelper(Coordinates monsterAt, Coordinates monsterNext) {
+
+         WorldObject monster = world[monsterAt.row][monsterAt.col];
+         WorldObject nextObject = world[monsterNext.row][monsterNext.col];
+
+        // Monster moves into player
+        if (nextObject.isPlayer()) {
+            status = GameStatus.LOST;
+            world[monsterNext.row][monsterNext.col] =  monster;
+            world[monsterAt.row][monsterAt.col] = new Space();
             return;
         }
 
-        // Alien moves in an edible object
-        if (world[alienNext.row][alienNext.col].isEdible())
-        {
-            // Alien moves into player
-        	if (world[alienNext.row][alienNext.col].isPlayer()) {
-                status = GameStatus.LOST;
-                world[alienAt.row][alienAt.col] = new Space();
-                alienAt.set(alienNext.row, alienNext.col);
-                world[alienAt.row][alienAt.col] = new Alien();
-                return;
-            }
-
-        	// Counts the emeralds the alien steals
-            remainingEmeraldsInWorld -= world[alienNext.row][alienNext.col].getEmeraldValue();
-        	world[alienAt.row][alienAt.col] = new Space();
-        	alienAt.set(alienNext.row, alienNext.col);
-        	world[alienAt.row][alienAt.col] = new Alien();
+        if (nextObject.isEdible() && !nextObject.isDirt()){
+            // Counts the emeralds the Monster steals
+            remainingEmeraldsInWorld -= nextObject.getEmeraldValue();
+            world[monsterNext.row][monsterNext.col] =  monster;
+            world[monsterAt.row][monsterAt.col] = new Space();
         }
     }
 
@@ -480,7 +494,7 @@ class World
                                 fellOnPlayer = true;
                             } else if (crushedObject.isMonster()) {
                                 System.out.println("Alien squashed!");
-                                alienAt = null;  // remove the alien from the game
+                                // alienAt = null;  // remove the alien from the game
                             } else {
                                 remainingEmeraldsInWorld -= crushedObject.getEmeraldValue();
                             }
