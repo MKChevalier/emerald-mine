@@ -58,8 +58,8 @@ class ScorePanel extends JPanel
         }
 
         scores[0].setText("Status: " + statusString);
-        scores[1].setText("Emeralds remaining to win: " + score.emeraldsRemaining);
-        scores[2].setText("Emeralds stolen by alien: " + score.emeraldsStolen);
+        scores[1].setText("Emeralds remaining in game: " + score.remainingEmeraldsInWorld);
+        scores[2].setText("Emeralds to be collected to win: " + score.remainingEmeraldsToWin);
         // repaint();
 
     }

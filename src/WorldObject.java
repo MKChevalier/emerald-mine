@@ -21,6 +21,7 @@ import java.util.Random;
  */
 abstract class WorldObject 
 {
+
     // the ImageIcon
     public abstract ImageIcon getImageIcon();
 
@@ -60,7 +61,7 @@ abstract class WorldObject
     }
 
     // how much is this object worth, in emeralds?
-    public int getEmeraldValue() 
+    public int getEmeraldValue()
     {
         return 0;  // 0 by default, must be overridden
     }
@@ -114,6 +115,8 @@ abstract class EdibleObject extends WorldObject
     public boolean isEdible() { return true; }
 }
 
+//-----------------------------------------------------------------------------
+
 /**
  * Instances of space.
  */
@@ -151,7 +154,7 @@ class Dirt extends EdibleObject
     public boolean isOpen() 		{ return true; }
     public boolean hasMass() 		{ return false; }
     public boolean isVulnerable() 	{ return false; }
-    public int getEmeraldValue() 	{ return 0; }
+    // public int getEmeraldValue() 	{ return 0; }
     public String toString() 		{ return "#"; }
     public ImageIcon getImageIcon() {
         return new ImageIcon("./images/dirt.png");
@@ -163,9 +166,11 @@ class Dirt extends EdibleObject
  */
 class Emerald extends EdibleObject 
 {
+    public static int emeraldValue = 1;
+
     public boolean hasMass() 		{ return true; }
     public boolean isVulnerable() 	{ return false; }
-    public int getEmeraldValue() 	{ return 1; }
+    public int getEmeraldValue() 	{ return emeraldValue; }
     public String toString() 		{ return "e"; }
     public ImageIcon getImageIcon() {
         return new ImageIcon("./images/emerald.png");
@@ -177,9 +182,11 @@ class Emerald extends EdibleObject
  */
 class Diamond extends EdibleObject 
 {
+    public static int emeraldValue = 3;
+
     public boolean hasMass() 		{ return true; }
     public boolean isVulnerable() 	{ return true; }
-    public int getEmeraldValue() 	{ return 3; }
+    public int getEmeraldValue() 	{ return emeraldValue; }
     public String toString() 		{ return "d"; }
     public ImageIcon getImageIcon() {
         return new ImageIcon("./images/diamond.png");

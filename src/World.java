@@ -10,10 +10,7 @@
  * World.java: Creation of World Class and necessary methods
  */
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,7 +22,7 @@ import java.util.Random;
 /**
  * World class for Emerald Mine game.
  */
-class World 
+class World
 {
 	/**
 	 * Simple record of a [row,col] coordinate.
@@ -55,7 +52,12 @@ class World
 
 	
     private int rows, cols;
-	private int initialEmeralds, emeraldsRemaining, emeraldsStolen;
+	// private int initialEmeralds;
+	// int emeraldsRemaining;
+	// int emeraldsStolen;
+
+	private int remainingEmeraldsInWorld;
+	private int remainingEmeraldsToWin;
 
     private WorldObject[][] world;
     private final Random rng = new Random();
@@ -71,26 +73,36 @@ class World
     //-------------------------------------------------------------------------
     
     /**
-     * Constructor.
+     * Constructor to create a random world.
      */
-    public World(int rows, int cols, int emeralds) 
+    public World(int rows, int cols, int emeralds, int diamonds, GameDifficulty gameDifficulty)
     {
         this.rows = rows;
         this.cols = cols;
-        this.initialEmeralds = emeralds;
-        this.emeraldsRemaining = emeralds;
+        // this.initialEmeralds = emeralds;
+        // this.emeraldsRemaining = emeralds;
 
-        init();
+        // TODO: check that the number of emeralds & diamonds matches the world size (rows*cols)
+
+
+        // This should decrease every time a diamond/emerald is collected or crushed
+        this.remainingEmeraldsInWorld =  emeralds*Emerald.emeraldValue + diamonds * Diamond.emeraldValue;
+
+        // This should decrease every time the player collects a diamond/emerald
+        this.remainingEmeraldsToWin = remainingEmeraldsInWorld - gameDifficulty.getAcceptableEmeraldLosses();
+
+
+        createRandomly(emeralds, diamonds);
     }
 
    /**
-    * Constructor to load from file.
+    * Constructor to load world definition from file.
     * @throws BadFileFormatException
     * @throws IOException
     */
-    public World(final String fileName) throws BadFileFormatException, IOException
+    public World(final String fileName, GameDifficulty gameDifficulty) throws BadFileFormatException, IOException
     {
-    	loadFromFile(fileName);
+    	createFromFile(fileName, gameDifficulty);
     }
 
     //-------------------------------------------------------------------------
@@ -111,23 +123,24 @@ class World
         return world;
     }
 
-    public int getEmeraldsRemaining() {
-        return emeraldsRemaining;
-    }
-
     public GameStatus getStatus() {
         return status;
     }
 
-    public int getEmeraldsStolen() {
-        return emeraldsStolen;
+    public int getRemainingEmeraldsInWorld() {
+        return remainingEmeraldsInWorld;
     }
+
+    public int getRemainingEmeraldsToWin() {
+        return remainingEmeraldsToWin;
+    }
+
 
 
     /**
      * World creation.
      */
-    private void init() 
+    private void createRandomly(int emeralds, int diamonds)
     {
      	// Create objects, shuffle and add to world
     	// Including an optimisation by Felix Quinque: add elements then shuffle 
@@ -141,17 +154,12 @@ class World
 		objects.add(new Alien());
 		
 		// Add the emeralds
-		for (int e = 0; e < emeraldsRemaining+1; e++) 
+		for (int e = 0; e < emeralds; e++)
 			objects.add(new Emerald());
 		
 		// Add the diamonds
-		final int numDiamonds = 3;
-		emeraldsRemaining += 3 * numDiamonds;
-		for (int d = 0; d < numDiamonds; d++) 
+		for (int d = 0; d < diamonds; d++)
 			objects.add(new Diamond());
-		// keep track of how many emeralds were initially placed and are initially required
-        initialEmeralds = emeraldsRemaining+1;
-
 
 		// Add some rocks
 		final int numRocks = 4 + rng.nextInt(3);
@@ -164,6 +172,8 @@ class World
     	
 		// Shuffle objects and put in world array
 		Collections.shuffle(objects);
+
+		// Register  Player & Alien coordinates
 		for (int n = 0; n < objects.size(); n++)
 		{
 			final int row = n / cols;
@@ -176,20 +186,24 @@ class World
 			else if (world[row][col].isMonster())
 				alienAt = new Coordinates(row, col);
 		}
-		
-		status = GameStatus.PLAYING;  // game is now active
+
+        // game is now active
+		status = GameStatus.PLAYING;
     }
 
     //-------------------------------------------------------------------------
 
     /**
-     * Constructor load from file.
+     * Create world from a file.
      * @param filename
      * @throws BadFileFormatException
      * @throws IOException
      */
-     private void loadFromFile(final String filename) throws BadFileFormatException, IOException 
+     private void createFromFile(final String filename, GameDifficulty gameDifficulty) throws BadFileFormatException, IOException
      {
+         // TODO: need to fix createFromFile methods
+     }
+ /*    {
         final BufferedReader in = 
         		new BufferedReader(new InputStreamReader(new FileInputStream(filename)));
 
@@ -243,7 +257,7 @@ class World
         // keep these two values (they will never change)
         initialEmeralds = emeraldsInWorld;
         in.close();
-    }
+    }*/
 
     //-------------------------------------------------------------------------
     
@@ -276,10 +290,10 @@ class World
     /**
      * @return Whether char input is a valid move.
      */
-    public boolean validMove(final char ch)
-    {
-    	return ch == 'u' || ch == 'd' || ch == 'l' || ch == 'r';
-    }
+    // public boolean validMove(final char ch)
+    // {
+    // 	return ch == 'u' || ch == 'd' || ch == 'l' || ch == 'r';
+    // }
 
     //-------------------------------------------------------------------------
 
@@ -289,6 +303,7 @@ class World
     public GameStatus applyMove(final char ch)
     {
     	playerMove(ch);
+
     	if (alienAt != null)
     	{
     		final char chAlien = world[alienAt.row][alienAt.col].getMove();
@@ -296,8 +311,8 @@ class World
     		alienMove(chAlien);
     	}
 
-    	// if alien stole too many emeralds to win, player loses.
-    	if (initialEmeralds - emeraldsStolen < emeraldsRemaining )
+    	// If there is less emerald value in World than what is still required to have a chance to win, game is over
+    	if (remainingEmeraldsInWorld < remainingEmeraldsToWin)
         {
             status = GameStatus.LOST;
         }
@@ -326,25 +341,39 @@ class World
     	supported = null;
     	
     	final Coordinates playerNext = stepTo(playerAt, ch);
-        if (!inBounds(playerNext.row, playerNext.col) || world[playerNext.row][playerNext.col].isMonster())
+
+    	// Player tries to move outside the board
+        if (!inBounds(playerNext.row, playerNext.col))
         {
         	// Player dies
-        	status = GameStatus.LOST;
-        	world[playerAt.row][playerAt.col] = new Space();  // remove the player from this world
+        	// status = GameStatus.LOST;
+        	// world[playerAt.row][playerAt.col] = new Space();  // remove the player from this world
+            System.out.println("Player cannot leave the world");
             return;
         }
-        
+
+        // Player tries to move into monster
+        if (world[playerNext.row][playerNext.col].isMonster())
+        {
+            // Player dies
+            status = GameStatus.LOST;
+            world[playerAt.row][playerAt.col] = new Space();  // remove the player from this world
+            return;
+        }
+
+        // Player eats an object
         if (world[playerNext.row][playerNext.col].isEdible()) 
         {
         	// Stepping into an edible cell, decrease by its point value
-        	emeraldsRemaining -= world[playerNext.row][playerNext.col].getEmeraldValue();
+            remainingEmeraldsInWorld -= world[playerNext.row][playerNext.col].getEmeraldValue();
+            remainingEmeraldsToWin -= world[playerNext.row][playerNext.col].getEmeraldValue();
 
             // Do not go below 0
-            if (emeraldsRemaining <= 0)
-                emeraldsRemaining = 0;
+            if (remainingEmeraldsToWin <= 0)
+                remainingEmeraldsToWin = 0;
 
             // Check for a win
-            if (emeraldsRemaining == 0)
+            if (remainingEmeraldsToWin <= 0)
             	status = GameStatus.WON;
          
             // Move the player
@@ -359,12 +388,13 @@ class World
             	// Player supports the object above
                 supported = new Coordinates(rowAbove, playerAt.col);
             }
+
+            return;
     	}
-        else
-        {
-        	// Can't step into an inedible object
-        	System.out.println("There is an obstacle in the way.");
-        }
+
+       	// Can't step into an inedible object
+       	System.out.println("There is an obstacle in the way.");
+
     }
     
     //-------------------------------------------------------------------------
@@ -374,24 +404,34 @@ class World
      */
     public void alienMove(final char ch) 
     {
+        // Alien is dead and no longer active
     	if (alienAt == null)
-    		return;  // alien is off the board and no longer active
+    		return;
     	
     	final Coordinates alienNext = stepTo(alienAt, ch);
-    	  
+
+        // Alien tries to move outside the board
         if (!inBounds(alienNext.row, alienNext.col)) 
         {
-        	world[alienAt.row][alienAt.col] = new Space();
-        	alienAt = null;  // alien exits the game
+        	// world[alienAt.row][alienAt.col] = new Space();
+        	// alienAt = null;  // alien exits the game
+            return;
         }
-        else if (world[alienNext.row][alienNext.col].isEdible())
-        {
-            // Alien can move there
-        	if (world[alienNext.row][alienNext.col].isPlayer()) 
-        		status = GameStatus.LOST;  // alien will step onto player
 
-            // counts the emeralds the alien steals
-            emeraldsStolen += world[alienAt.row][alienAt.col].getEmeraldValue(); // TODO: Should probably be alienNext
+        // Alien moves in an edible object
+        if (world[alienNext.row][alienNext.col].isEdible())
+        {
+            // Alien moves into player
+        	if (world[alienNext.row][alienNext.col].isPlayer()) {
+                status = GameStatus.LOST;
+                world[alienAt.row][alienAt.col] = new Space();
+                alienAt.set(alienNext.row, alienNext.col);
+                world[alienAt.row][alienAt.col] = new Alien();
+                return;
+            }
+
+        	// Counts the emeralds the alien steals
+            remainingEmeraldsInWorld -= world[alienNext.row][alienNext.col].getEmeraldValue();
         	world[alienAt.row][alienAt.col] = new Space();
         	alienAt.set(alienNext.row, alienNext.col);
         	world[alienAt.row][alienAt.col] = new Alien();
@@ -470,7 +510,11 @@ class World
     @Override
     public String toString() 
     {
-        String str = "Emeralds remaining: " + emeraldsRemaining + "\n";
+        String str;
+
+        str = "Emeralds remaining in game: " + remainingEmeraldsInWorld + "\n";
+        str += "Emeralds to collect to win: " + remainingEmeraldsToWin + "\n";
+
         for (int r = 0; r < rows; r++) 
         {
             for (int c = 0; c < cols; c++) 

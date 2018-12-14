@@ -27,7 +27,7 @@ public class main {
                         System.getProperty("user.dir"));
                 String fileName = "./WorldDefinitions/Board2.txt";
                 System.out.println("Testing file: " + fileName + "...");
-                world = new World(fileName);  // TODO: This constructor fails at initializing the world properly => crash the game during play
+                world = new World(fileName, GameDifficulty.MEDIUM);  // TODO: This constructor fails at initializing the world properly => crash the game during play
                 System.out.println("Successfully loaded world.");
                 // catch possible exceptions from the creation of a world from a file
             } catch (BadFileFormatException e) {
@@ -39,7 +39,7 @@ public class main {
             }
         }
         else {
-            world = new World(20, 20, 50);
+            world = new World(20, 20, 50, 3, GameDifficulty.MEDIUM);
         }
 
         if (world!=null)

@@ -3,8 +3,8 @@ public class Score {
     World world;
 
     GameStatus gameStatus;
-    int emeraldsRemaining;
-    int emeraldsStolen;
+    int remainingEmeraldsInWorld;
+    int remainingEmeraldsToWin;
 
     public Score(World world)
     {
@@ -14,7 +14,7 @@ public class Score {
     public void Update()
     {
         gameStatus = world.getStatus();
-        emeraldsRemaining = world.getEmeraldsRemaining();
-        emeraldsStolen = world.getEmeraldsStolen();
+        remainingEmeraldsInWorld = world.getRemainingEmeraldsInWorld();
+        remainingEmeraldsToWin = world.getRemainingEmeraldsToWin();
     }
 }

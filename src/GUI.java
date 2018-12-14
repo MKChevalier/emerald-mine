@@ -51,7 +51,7 @@ class GUI
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         // Create JLabel for the rules
-        rulesLabel = new JLabel("<html>Here are the rules: <br>You are the player. Your aim is to collect " + world.getEmeraldsRemaining()+
+        rulesLabel = new JLabel("<html>Here are the rules: <br>You are the player. Your aim is to collect " + world.getRemainingEmeraldsToWin()+
                 " emeralds without leaving the map or getting killed by the alien. <br>" +
                 "You can also collect diamonds, each diamond is worth three emeralds. <br>" +
                 "The alien can move up, down left or right by one and he can steal emeralds. <br>" +
